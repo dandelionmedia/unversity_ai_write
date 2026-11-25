@@ -192,8 +192,8 @@
 
     if (hasBlank) {
       h += '<div class="seg" role="tablist">' +
-        '<button type="button" class="seg-btn is-on" role="tab" aria-selected="true" data-pane="orig">📄 원본 프롬프트</button>' +
-        '<button type="button" class="seg-btn" role="tab" aria-selected="false" data-pane="fill">✍️ 직접 입력 프롬프트</button>' +
+        '<button type="button" class="seg-btn is-on" role="tab" aria-selected="true" data-pane="orig">📄 원본<span class="xs-hide"> 프롬프트</span></button>' +
+        '<button type="button" class="seg-btn" role="tab" aria-selected="false" data-pane="fill">✍️ 직접 입력<span class="xs-hide"> 프롬프트</span></button>' +
         '<span class="seg-glider" aria-hidden="true"></span>' +
       '</div>';
     }
@@ -282,7 +282,7 @@
       '<div class="w5-top">' +
         '<div class="theme-box reveal">' +
           '<label for="themeInput"><span class="tb-kicker">오늘의 관통 주제</span><strong>하나만 정해서 모든 실습에 사용하세요</strong></label>' +
-          '<div class="tb-row"><input id="themeInput" type="text" autocomplete="off" placeholder="나의 주제: 예) 나의 전공 / 나의 꿈 / 내가 좋아하는 것">' +
+          '<div class="tb-row"><input id="themeInput" type="text" autocomplete="off" placeholder="예) 나의 전공 / 나의 꿈 / 좋아하는 것">' +
           '<button type="button" class="btn btn-example tb-btn" id="themeExample"><span class="ico">🎲</span><span class="lbl">주제 예시</span></button></div>' +
           '<p class="tb-help">여기에 쓴 주제는 <b>실습 ①</b>의 주제 빈칸에 자동으로 들어갑니다.</p>' +
         '</div>' +

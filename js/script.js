@@ -6,6 +6,8 @@
   'use strict';
 
   var WB = window.WORKBOOK;
+  var WB2 = window.WORKBOOK2;
+  var BY_ID = {};
   var BLANK_TEXT = '[          ]';
   var lastPersona = -1;
 
@@ -59,9 +61,12 @@
     headline: '헤드라인 15자', sub: '서브카피 30자', kw1: '키워드1', kw2: '키워드2', kw3: '키워드3', evidence: '핵심 근거 한 줄',
     cta: '행동 유도 문구', main: '메인 HEX', point: '포인트 HEX', bg: '배경 HEX', mood: '분위기 형용사 3개', motif: '모티프 2가지',
     nick: '이름/닉네임', n: '장 번호', cardTitle: '카드 제목', cardBody: '카드 본문', cardImg: '이미지 연출',
-    resultDesc: '결과물 설명', postChannel: '게시 채널', todayLog: '오늘 한 일 (단계→도구)', myEdits: '내가 직접 고친 부분'
+    resultDesc: '결과물 설명', postChannel: '게시 채널', todayLog: '오늘 한 일 (단계→도구)', myEdits: '내가 직접 고친 부분',
+    theme: '나의 주제', company: '기업명/직무', question: '자기소개서 문항', limit: '글자 수', star: 'STAR 경험 메모',
+    to: '받는 사람', purpose: '용건', reason: '이유 (사실대로)', cGoal: '목적', cTarget: '타깃', cMsg: '핵심 메시지 한 문장', cCta: 'CTA',
+    role: '역할', aim: '목적: 무엇을 만들지', context: '맥락: 내 상황과 재료', cond: '조건: 지킬 규칙', format: '출력 형식'
   };
-  var MULTI = { memo: 1, todayLog: 1, myEdits: 1 };
+  var MULTI = { memo: 1, todayLog: 1, myEdits: 1, star: 1, context: 1 };
 
   function renderBlank(p) {
     var src = p.blank, out = '', last = 0, m;
@@ -91,7 +96,7 @@
     var deptYear = p.dept + ' ' + p.year;
     var log = 'P1 목표 진단(ChatGPT) → ' + pick(['P3-1 인터뷰(ChatGPT)', 'P3-2 경험 정리(Gemini)', 'P3-1 인터뷰(Claude)']) +
       ' → P4-' + p.track + ' 조사(Perplexity) → P4-E 출처 재검증(Perplexity) → P5-' + p.track + ' 기획서(Gemini) → P6 첨삭(Claude) → ' + output.log;
-    return {
+    var ex = {
       label: deptYear + ' · ' + track + ' 트랙',
       v: {
         deptYear: deptYear, deptYear2: deptYear, dept: p.dept, worry: p.worry, interest: p.interest,
@@ -107,6 +112,43 @@
         todayLog: log, myEdits: '내가 직접 고친 부분: ' + pick(POOL.edits)
       }
     };
+    var v = ex.v, mail = pick(MAILS), five = pick(FIVE)(p);
+    var theme = currentTheme() || pick([
+      '내가 ' + p.dept + '를 선택한 이유', '나의 꿈: ' + p.job + '이 되는 것', '내가 좋아하는 것: ' + p.field,
+      p.dept + '에서 배운 가장 소중한 경험', '요즘 나의 가장 큰 고민: ' + p.worry
+    ]);
+    v.theme = theme;
+    v.company = p.job;
+    v.question = pick(['지원 동기 및 직무 역량을 기술해 주세요', '본인의 강점이 드러난 경험을 기술해 주세요', '협업으로 문제를 해결한 경험을 기술해 주세요']);
+    v.limit = pick(['500자', '700자', '800자']);
+    v.star = 'S(상황): ' + p.memo[0] + '\nT(과제): ' + pick(['맡은 역할에서 눈에 보이는 결과를 만들어야 했음', '처음 해 보는 일이라 스스로 방법을 찾아야 했음', '팀원들과 정해진 기간 안에 끝내야 했음']) + '\nA(행동): ' + pick(['진행 과정을 직접 기록하고 매주 점검함', '필요한 자료를 찾아 정리하고 주변에 공유함', '문제가 생길 때마다 원인을 메모하고 방법을 바꿔 봄']) + '\nR(결과): [확인 필요 — 실제 결과를 적어 주세요]';
+    v.to = mail.to; v.purpose = mail.purpose; v.reason = mail.reason;
+    if (Math.random() < 0.5) {
+      v.cGoal = '내 전공(' + p.dept + ')을 고등학생에게 소개'; v.cTarget = '진로를 고민하는 고등학생'; v.cMsg = p.brand; v.cCta = pick(['학과 인스타 팔로우', '학과 홈페이지 방문', '입학 설명회 신청']);
+    } else {
+      v.cGoal = '"' + p.item + '"을(를) 알리기'; v.cTarget = p.customer; v.cMsg = p.sub; v.cCta = p.cta;
+    }
+    v.role = five.role; v.aim = five.aim; v.context = five.context; v.cond = five.cond; v.format = five.format;
+    return ex;
+  }
+
+  var MAILS = [
+    { to: '전공기초 과목 담당 교수님', purpose: '과제 제출 기한 연장 요청', reason: '독감으로 병원 진료를 받아 3일간 과제를 하지 못함 (진료확인서 있음)' },
+    { to: '지도교수님', purpose: '진로 상담 면담 요청', reason: '졸업 후 진로를 정하는 데 조언이 필요함, 다음 주 화·목 오후 가능' },
+    { to: '전공실습 과목 교수님', purpose: '중간고사 성적 확인 문의', reason: '공지된 점수와 내가 계산한 점수가 3점 차이가 남' },
+    { to: '학과 교수님', purpose: '추천서 작성 부탁', reason: '다음 달 마감인 기업 인턴십에 지원하려고 함' },
+    { to: '교양 과목 교수님', purpose: '결석 사유 안내 및 출석 인정 문의', reason: '학과 공식 행사(현장실습 오리엔테이션) 참석으로 수업에 빠짐 (참석 확인서 있음)' },
+    { to: '팀 프로젝트 과목 교수님', purpose: '팀 프로젝트 역할 분담 상담 요청', reason: '팀원 1명이 2주째 연락이 되지 않아 일정에 차질이 생김' }
+  ];
+  var FIVE = [
+    function (p) { return { role: p.job + ' 채용 인사담당자', aim: p.job + ' 지원 동기 500자 초안', context: p.memo[0] + ' / ' + p.memo[1], cond: '500자 이내, 내가 말하지 않은 사실은 넣지 말 것', format: '초안 2개 + 각각의 장단점을 표로' }; },
+    function (p) { return { role: '퍼스널브랜딩 콘텐츠 에디터', aim: p.channel + '에 올릴 첫 게시글', context: '나는 ' + p.dept + ' ' + p.year + ', 브랜드 메시지는 "' + p.brand + '"', cond: '300자 이내, 과장 표현(최고·100%) 금지', format: '제목 후보 3개 + 본문 1개' }; },
+    function (p) { return { role: '대학 보고서 글쓰기 튜터', aim: '"' + p.topic + '" 보고서의 서론 문단', context: p.dept + ' 전공 수업 과제, 분량은 A4 3쪽', cond: '400자 이내, 출처 없는 통계는 쓰지 말 것', format: '서론 문단 1개 + 보완할 점 3가지' }; },
+    function (p) { return { role: '청년 창업 홍보 카피라이터', aim: '"' + p.item + '" 홍보 문구', context: '타깃은 ' + p.customer + ', 나의 근거 경험은 ' + p.evidence, cond: '20자 이내, 사실만 쓰고 과장 금지', format: '문구 5개 + 각각 어울리는 채널을 표로' }; }
+  ];
+  function currentTheme() {
+    var el = document.getElementById('themeInput');
+    return el && el.value.trim() ? el.value.trim() : '';
   }
 
   /* ---------- 카드 렌더 ---------- */
@@ -122,7 +164,7 @@
   }
 
   function cardHTML(p, i) {
-    var id = 'p-' + p.code.replace(/[^\w가-힣-]/g, '');
+    var id = p.id || ('p-' + p.code.replace(/[^\w가-힣-]/g, ''));
     var track = trackOf(p);
     var hasBlank = !!p.blank;
     var isPaste = !hasBlank;
@@ -137,6 +179,7 @@
           '<h3>' + esc(titleClean(p.code === '공통' ? p.title : p.title)) + '</h3>' +
           '<div class="p-tags">' +
             (track ? '<span class="tag tag-track">' + track + ' 트랙</span>' : '') +
+            (p.part ? '<span class="tag tag-track">' + esc(p.part) + '</span>' : '') +
             (/\(선택\)/.test(p.title) ? '<span class="tag tag-opt">선택</span>' : '') +
             (/\(과제\)/.test(p.title) ? '<span class="tag tag-hw">과제</span>' : '') +
             '<span class="tag tag-tool">🤖 ' + esc(p.rec) + '</span>' +
@@ -224,9 +267,53 @@
     root.innerHTML = html;
   }
 
+  function renderPart2() {
+    var root = $('#w5');
+    if (!root || !WB2) return;
+    var parts = ['1부 자율 글쓰기', '2부 형식 글쓰기', '3부 알고리즘 글쓰기', '4부 콘텐츠 기획제작', '5부 프롬프트 글쓰기'];
+    var h = '<div class="module-head reveal">' +
+        '<div class="module-no w5-no"><span class="mn-num">5</span><span class="mn-ico" aria-hidden="true">✍️</span></div>' +
+        '<div class="module-info">' +
+          '<div class="module-time">실습 프롬프트 모음 · 실습 ①~⑥</div>' +
+          '<h2>AI와 함께 쓰는 5가지 글쓰기</h2>' +
+          '<p class="module-goal"><b>흐름</b> ' + parts.join(' → ') + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<div class="w5-top">' +
+        '<div class="theme-box reveal">' +
+          '<label for="themeInput"><span class="tb-kicker">오늘의 관통 주제</span><strong>하나만 정해서 모든 실습에 사용하세요</strong></label>' +
+          '<div class="tb-row"><input id="themeInput" type="text" autocomplete="off" placeholder="나의 주제: 예) 나의 전공 / 나의 꿈 / 내가 좋아하는 것">' +
+          '<button type="button" class="btn btn-example tb-btn" id="themeExample"><span class="ico">🎲</span><span class="lbl">주제 예시</span></button></div>' +
+          '<p class="tb-help">여기에 쓴 주제는 <b>실습 ①</b>의 주제 빈칸에 자동으로 들어갑니다.</p>' +
+        '</div>' +
+        '<div class="q3 reveal"><span class="tb-kicker">글을 쓰기 전 3가지 질문</span><ol>' +
+          WB2.questions.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ol></div>' +
+      '</div>' +
+      '<ul class="w5-howto reveal">' + WB2.howto.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
+      '<div class="card-list">' + WB2.prompts.map(cardHTML).join('') + '</div>';
+    root.innerHTML = h;
+
+    var THEMES = ['내가 이 전공을 선택한 이유', '나의 꿈과 그 꿈을 정한 계기', '내가 좋아하는 것과 그 이유', '대학에 와서 가장 많이 성장한 순간', '나를 한 단어로 표현한다면', '요즘 가장 몰입하고 있는 일', '10년 뒤의 나에게', '나의 첫 아르바이트에서 배운 것'];
+    var input = $('#themeInput');
+    function pushTheme() {
+      var v = input.value.trim();
+      $all('#w5 .blank[data-key="theme"]').forEach(function (b) { b.textContent = v; b.classList.remove('is-example'); });
+      resetCopied($('#w-1'));
+    }
+    input.addEventListener('input', pushTheme);
+    $('#themeExample').addEventListener('click', function () {
+      var cur = input.value, t;
+      do { t = pick(THEMES); } while (t === cur && THEMES.length > 1);
+      input.value = t; pushTheme();
+      var w1 = $('#w-1');
+      if (w1 && !$('.pane[data-pane=fill]', w1).hidden) { /* already visible */ }
+      toast('🎲 주제 예시: <b>' + esc(t) + '</b>', 'gold');
+    });
+  }
+
   function renderNavAndTimeline() {
     var nav = $('#navChips'), tl = $('#timeline');
-    var navH = '', tlH = '';
+    var navH = '<a class="chip chip-new" href="#w5" data-target="w5"><span>✦</span>5가지 글쓰기</a>', tlH = '';
     WB.modules.forEach(function (m, idx) {
       var codes = WB.prompts.filter(function (p) { return p.module === m.id && p.code !== '공통'; }).map(function (p) { return p.code; });
       navH += '<a class="chip" href="#' + m.id + '" data-target="' + m.id + '"><span>' + m.no + '</span>' + SHORT[idx] + '</a>';
@@ -338,9 +425,7 @@
         var text = pre.classList.contains('prompt-fill') ? extractText(pre) : (function () {
           var card = btn.closest('.p-card');
           if (card) {
-            var code = card.getAttribute('data-code');
-            var p = WB.prompts.filter(function (x) { return x.code === code; })[0];
-            return p.body;
+            return BY_ID[card.id].body;
           }
           return pre.textContent;
         })();
@@ -414,7 +499,7 @@
   /* ---------- 스크롤: 맨위 버튼 · 네비 하이라이트 · 등장 애니메이션 ---------- */
   function bindScroll() {
     var topBtn = $('#toTop'), header = $('#siteHeader'), bar = $('#progressBar');
-    var sections = $all('.module, #appendix');
+    var sections = $all('#w5, .module, #appendix');
     var chips = $all('#navChips .chip');
     var ticking = false;
 
@@ -456,6 +541,8 @@
   /* ---------- 시작 ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     renderNavAndTimeline();
+    WB.prompts.concat(WB2 ? WB2.prompts : []).forEach(function (p) { BY_ID[p.id || ('p-' + p.code.replace(/[^\w가-힣-]/g, ''))] = p; });
+    renderPart2();
     renderModules();
     renderAppendix();
     $('#promptCount').textContent = WB.prompts.filter(function (p) { return p.code !== '공통'; }).length;
